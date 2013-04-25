@@ -1,0 +1,1 @@
+Module to calculate the pseudo-magnetic fields based on a given strain geometry.  This will eventually be expanded to include calculations of the expected Raman spectra.
