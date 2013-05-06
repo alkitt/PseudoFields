@@ -5,7 +5,8 @@ import Constants as C
 
 def En(n,B):
 	# Returns the energy, in eV, of the nth Landau level at magnetic field B (T)
-	energy=.0324*copysign(1,n)*sqrt(abs(n)*B)
+	# negative n gives negative energy
+	energy=sqrt(2*C.hbar*C.ec*C.vg**2)*copysign(1,n)*sqrt(abs(n)*B)/C.ec
 
 	return energy
 

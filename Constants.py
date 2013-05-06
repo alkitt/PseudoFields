@@ -1,3 +1,5 @@
+from math import pi
+
 # Metric prefixes
 mili=1e-3
 micro=1e-6
@@ -8,10 +10,12 @@ Giga=1e9
 Tera=1e12
 
 # Fundamental Constants--stick with SI
-fq=2.067e-15 # Flux quanta in T*m^2
 kb=1.3806488e-23 # Boltzmans constant in J/K
 ec=1.602176565e-19 # Charge on the electron in Coulomb
 hbar=1.05457173e-34 # hbar in Js
+
+# Derived constants
+fq=hbar*2*pi/ec # Flux quanta in T*m^2
 
 # Unit conversions--all to SI units
 psi=6894.75729
@@ -19,6 +23,7 @@ psi=6894.75729
 # Constants for graphene
 yg=Tera # Young's modulus of graphene (Pa)
 tg=.34*nano # Thickness of graphene (m)
-ag=.14*nano # Nearest neighbor distance (m)
+ag=.142*nano # Nearest neighbor distance (m)
 betag=3.37 # Electron phonon coupling
-vg=.893e6 # Group velocity (m/s)
+thop=2.8*ec # Nearest neighbor hopping energy (J)
+vg=3./2.*ag*thop/hbar # Group velocity (m/s)

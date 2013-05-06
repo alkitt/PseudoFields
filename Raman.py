@@ -1,7 +1,7 @@
 # Raman.py
 # Module to hold often used Raman fuctions
 from scipy import *
-from Constants import C
+import Constants as C
 
 def Lor(k,wc,ga):
 	# The value of a normalized Lorentzian with center frequency wc and width ga evaluated at k
