@@ -1,8 +1,8 @@
 # MagPho.py
 # Module to hold formulas which deal with the magneto phonon coupling in graphene
 # Follows M.O. Goerbig Rev Mod Phys 83, 1193 (2011)
-from scipy import *
-import Constants as C
+from scipy import *		# scipy scripts
+import Constants as C 	# fundamental constants and graphene constants
 
 def lB(B):
 	# The magnetic length in meters for a given magnetic field B (T)
@@ -10,7 +10,7 @@ def lB(B):
 
 def cycw(B):
 	# The cyclotron frquency for a given magnetic field (T)
-	return sqrt(2)*C.vf/lB(B)
+	return sqrt(2)*C.vg/lB(B)
 
 def En(lam,n,B):
 	# Returns the energy, in eV, with band index lambda (+/-1) of the nth Landau level at magnetic field B (T)

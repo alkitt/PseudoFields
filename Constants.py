@@ -28,3 +28,4 @@ betag=3.37 				# Electron phonon coupling
 thop=2.8*ec 			# Nearest neighbor hopping energy (J)
 vg=3./2.*ag*thop/hbar 	# Fermi velocity (m/s)
 gep=.26					# Graphene electron phonon coupling (eV)
+w0=.2 					# G band phonon energy (eV)
