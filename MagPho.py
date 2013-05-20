@@ -34,21 +34,47 @@ def pfill(nel,lam,n,B):
 	
 	# First get the absolute filling factor
 	nufil=fill(nel,B)
-	# Convert filling factor to energy level (eq 104)
-	nfild=1./4.*(nufil-2.)
-	# If rounded toward zero, the sign gives the value of lambda and the absolute value gives the value of n
-	# The absolute value of the decimal gives the partial filling of the nth level
-	if nfild >=0:
-		nfil=floor(nfild)
+	# Determine the heighest filled (lam,n) and get partial filling factor
+	# Be careful, \nu -2 to 2 is n =0, then goes by \nu+4 increments
+	if abs(nufil)<=2:								# n=0
+		if lam<0 and n>=1:							# Level full
+			pf=1
+		elif lam>0 and n>=1:						# Level empty
+			pf=0
+		elif n==0:									# Partial fill
+			pf=(nufil+2.)/4.
+		else:
+			print "Error 0 in pfill function"
+			return nan
+	elif abs(nufil)>2:								# n>=1
+		# Determine (lamt,nt) for given nel
+		lamt=copysign(1,nufil)
+		if lamt>0:
+			nt=1+floor((abs(nufil)-2.)/4.)
+		elif lamt<0:
+			nt=  ceil((abs(nufil)-2.)/4.)
+		else:
+			print "Error 1 in pfill function"
+			return nan
+		# Compare (lam,n) to (lamt,nt)
+		if   lam*n< lamt*nt:						# Level full
+			pf=1
+		elif lam*n> lamt*nt:						# Level empty
+			pf=0
+		elif lam*n==lamt*nt:						# Partial fill
+			if lamt>0:
+				pf=((abs(nufil)-2.)%4)/4.
+			elif lamt<0:
+				pf=1-((abs(nufil)-2.)%4)/4.
+			else:
+				print "Error 4 in pfill function"
+				return nan
+		else:
+			print "Error 2 in pfill function"
+			return nan
 	else:
-		nfil=ceil(nfild)
-
-	if nel*lam<nfil: 	# If the level is less than the fill, it is filled
-		pf=1
-	elif nel*lam>nfil:	# If the level is greater than the fill, it is empty
-		pf=0
-	else:				# If they are the same level, use the decimal point
-		pf=abs(nfil%1)
+		print "Error 3 in pfill function"
+		return nan
 
 	return pf
 
@@ -60,13 +86,13 @@ def kron(a,b):
 
 def gRH(nel,n,B):
 	# Effective coupling constants (eqn 189) for doping nel (1/m^2), the level n, and magnetic field B (T)
-	gamma=3.*sqrt(3)*C.ag**2/(2.*pi*lB(B))
-	return C.gep*sqrt((1+kron(n,0))*gamma)*sqrt(pfil(nel,-1,n+1,B)-pfil(nel,+1,n,B))
+	gamma=3.*sqrt(3)*C.ag**2/(2.*pi*lB(B)**2)
+	return C.gep*sqrt((1+kron(n,0))*gamma)*sqrt(pfill(nel,-1,n+1,B)-pfill(nel,+1, n ,B))
 
 def gLH(nel,n,B):
 	# Effective coupling constants (eqn 189) for doping nel (1/m^2), the level n, and magnetic field B (T)
-	gamma=3.*sqrt(3)*C.ag**2/(2.*pi*lB(B))
-	return C.gep*sqrt((1+kron(n,0))*gamma)*sqrt(pfil(nel,-1,n,B)-pfil(nel,+1,n+1,B))
+	gamma=3.*sqrt(3)*C.ag**2/(2.*pi*lB(B)**2)
+	return C.gep*sqrt((1+kron(n,0))*gamma)*sqrt(pfill(nel,-1, n ,B)-pfill(nel,+1,n+1,B))
 
 def MEinter(n,B):
 	# The energy of the magneto exciton (eV) corresponding to the transitions between -,n and +,n+1 at magnetic field B (T)
