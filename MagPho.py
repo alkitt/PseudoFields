@@ -1,8 +1,9 @@
 # MagPho.py
 # Module to hold formulas which deal with the magneto phonon coupling in graphene
 # Follows M.O. Goerbig Rev Mod Phys 83, 1193 (2011)
-from scipy import *		# scipy scripts
-import Constants as C 	# fundamental constants and graphene constants
+from scipy import *					# scipy scripts
+import Constants as C 				# fundamental constants and graphene constants
+from scipy.optimize import root		# Numerically solve for roots of a function
 
 def lB(B):
 	# The magnetic length in meters for a given magnetic field B (T)
@@ -84,20 +85,71 @@ def kron(a,b):
 	else:
 		return 0
 
-def gRH(nel,n,B):
-	# Effective coupling constants (eqn 189) for doping nel (1/m^2), the level n, and magnetic field B (T)
+def g(A,nel,n,B):
+	# Effective coupling constants (eqn 189) for doping nel (1/m^2), the level n, magnetic field B (T), and handedness A
+	# A=+1 for RH, A=-1 for LH
 	gamma=3.*sqrt(3)*C.ag**2/(2.*pi*lB(B)**2)
-	return C.gep*sqrt((1+kron(n,0))*gamma)*sqrt(pfill(nel,-1,n+1,B)-pfill(nel,+1, n ,B))
-
-def gLH(nel,n,B):
-	# Effective coupling constants (eqn 189) for doping nel (1/m^2), the level n, and magnetic field B (T)
-	gamma=3.*sqrt(3)*C.ag**2/(2.*pi*lB(B)**2)
-	return C.gep*sqrt((1+kron(n,0))*gamma)*sqrt(pfill(nel,-1, n ,B)-pfill(nel,+1,n+1,B))
+	if A==+1:
+		Aout=C.gep*sqrt((1+kron(n,0))*gamma)*sqrt(pfill(nel,-1,n+1,B)-pfill(nel,+1, n ,B))
+	elif A==-1:
+		Aout=C.gep*sqrt((1+kron(n,0))*gamma)*sqrt(pfill(nel,-1, n ,B)-pfill(nel,+1,n+1,B))
+	else:
+		print "Error in g in MagPho.py"
+		return nan
+	return Aout
 
 def MEinter(n,B):
 	# The energy of the magneto exciton (eV) corresponding to the transitions between -,n and +,n+1 at magnetic field B (T)
-	return C.hbar*cycw(B)*(sqrt(n+1)+sqrt(n))/C.ec
+	return C.hbar*cycw(B)*(sqrt(n+1)+sqrt(n))/C.ec+C.dLL
 
 def MEintra(n,B):
 	# The energy of the magneto exciton (eV) corresponding to the transitions between +,n and +,n+1 at magnetic field B (T)
-	return C.hbar*cycw(B)*(sqrt(n+1)-sqrt(n))/C.ec
+	return C.hbar*cycw(B)*(sqrt(n+1)-sqrt(n))/C.ec+C.dLL
+
+def eq195(eA,A,nel,B,Nc):
+	# The roots of EQ 195 give the complex energy of the magneto-phonon mixed states, eA=[Re[eA],Im[eA]] (eV).
+	# B magnetic field (T), nel electron doping in (1/m**2), Nc heighest LL to sum to
+	# A handedness A=+1 for RH, A=-1 for LH
+	ceA=complex(eA[0],eA[1])
+	LHS=ceA**2-C.w0**2 													#LHS of eqn 195
+	# Building the RHS of eqn 195
+	Nf=0 # Restricting the sum would save some computation power (if necessary)
+	inter=sum(MEinter(n ,B)*g(A,nel,n ,B)**2/(ceA**2-MEinter(n, B)**2) for n in xrange(Nf+1,Nc+1,1))
+	intra=    MEintra(Nf,B)*g(A,nel,Nf,B)**2/(ceA**2-MEintra(Nf,B)**2)
+	RHS=4*C.w0*(inter+intra) 											#RHS of eqn 195
+
+	# Find root by finding where real and imaginary part go to zero
+	metric=LHS-RHS
+	return (metric.real,metric.imag)
+
+def Seq195(stpoint,A,nel,B,Nc):
+	# Solves for a root of eq195() near stpoint=[Real(G band energy),Imaginary(G band energy)] in eV
+	# Return real and complex parts of G band energy in eV
+	sol1=root(lambda x:eq195(x,A,nel,B,Nc),stpoint,jac=False)
+	if sol1.success==True:
+		out=sol1.x
+	elif sol1.success==False:
+		print sol1.message
+		out=nan
+	else:
+		print "Error Seq195 solve"
+		return nan
+
+	return out
+
+def MSeq195(A,nel,B,Nc):
+	# Uses Seq195 to solve for each of the roots of eq195
+	# Look on each side of each resonance and then eliminate duplicates
+	# Expect a total 1 root for G band, 1 root for each magnetoexciton (inter and intra)
+	roots=zeros((2*(1+Nc+1),2))
+	# Look on both sides of each resonance by a factor of epsilon
+	eps=.001
+	roots[0]        =Seq195([(1+eps)*C.w0.real        ,C.w0.imag]        ,A,nel,B,Nc)		# G band
+	roots[1]	    =Seq195([(1-eps)*C.w0.real        ,C.w0.imag]        ,A,nel,B,Nc)
+	for n in range(Nc):																		# inter band transitions
+		roots[2+n*2]=Seq195([(1+eps)*MEinter(n,B).real,MEinter(n,B).imag],A,nel,B,Nc)
+		roots[3+n*2]=Seq195([(1-eps)*MEinter(n,B).real,MEinter(n,B).imag],A,nel,B,Nc)
+	roots[2*Nc+2]   =Seq195([(1+eps)*MEintra(n,B).real,MEintra(n,B).imag],A,nel,B,Nc)		# intra band transitions
+	roots[2*Nc+3]   =Seq195([(1-eps)*MEintra(n,B).real,MEintra(n,B).imag],A,nel,B,Nc)
+
+	return roots

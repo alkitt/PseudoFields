@@ -108,7 +108,7 @@ pstyle=0
 for n in [0,1,2,3]:
 	pfplot=zeros(B.shape[0])
 	for i in range(0,B.shape[0],1):
-		pfplot[i]=MP.gRH(1e16,n,B[i])
+		pfplot[i]=MP.g(1,1e16,n,B[i])
 	ax.plot(B,pfplot,pstyles[pstyle%len(pstyles)])
 	pstyle+=1
 ax=fig.add_subplot(322)
@@ -116,7 +116,7 @@ pstyle=0
 for n in [0,1,2,3]:
 	pfplot=zeros(B.shape[0])
 	for i in range(0,B.shape[0],1):
-		pfplot[i]=MP.gLH(1e16,n,B[i])
+		pfplot[i]=MP.g(-1,1e16,n,B[i])
 	ax.plot(B,pfplot,pstyles[pstyle%len(pstyles)])
 	pstyle+=1
 ax=fig.add_subplot(323)
@@ -124,7 +124,7 @@ pstyle=0
 for n in [0,1,2,3]:
 	pfplot=zeros(B.shape[0])
 	for i in range(0,B.shape[0],1):
-		pfplot[i]=MP.gRH(0,n,B[i])
+		pfplot[i]=MP.g(1,0,n,B[i])
 	ax.plot(B,pfplot,pstyles[pstyle%len(pstyles)])
 	pstyle+=1
 ax=fig.add_subplot(324)
@@ -132,7 +132,7 @@ pstyle=0
 for n in [0,1,2,3]:
 	pfplot=zeros(B.shape[0])
 	for i in range(0,B.shape[0],1):
-		pfplot[i]=MP.gLH(0,n,B[i])
+		pfplot[i]=MP.g(-1,0,n,B[i])
 	ax.plot(B,pfplot,pstyles[pstyle%len(pstyles)])
 	pstyle+=1
 ax=fig.add_subplot(325)
@@ -140,7 +140,7 @@ pstyle=0
 for n in [0,1,2,3]:
 	pfplot=zeros(B.shape[0])
 	for i in range(0,B.shape[0],1):
-		pfplot[i]=MP.gRH(-1e16,n,B[i])
+		pfplot[i]=MP.g(1,-1e16,n,B[i])
 	ax.plot(B,pfplot,pstyles[pstyle%len(pstyles)])
 	pstyle+=1
 ax=fig.add_subplot(326)
@@ -148,7 +148,7 @@ pstyle=0
 for n in [0,1,2,3]:
 	pfplot=zeros(B.shape[0])
 	for i in range(0,B.shape[0],1):
-		pfplot[i]=MP.gLH(-1e16,n,B[i])
+		pfplot[i]=MP.g(-1,-1e16,n,B[i])
 	ax.plot(B,pfplot,pstyles[pstyle%len(pstyles)])
 	pstyle+=1
 
