@@ -4,6 +4,7 @@
 from scipy import *					# scipy scripts
 import Constants as C 				# fundamental constants and graphene constants
 from scipy.optimize import root		# Numerically solve for roots of a function
+from scipy.optimize import show_options
 
 def lB(B):
 	# The magnetic length in meters for a given magnetic field B (T)
@@ -125,7 +126,10 @@ def eq195(eA,A,nel,B,Nc):
 def Seq195(stpoint,A,nel,B,Nc):
 	# Solves for a root of eq195() near stpoint=[Real(G band energy),Imaginary(G band energy)] in eV
 	# Return real and complex parts of G band energy in eV
-	sol1=root(lambda x:eq195(x,A,nel,B,Nc),stpoint,jac=False)
+	# step size stepsize for root finding function
+	meth='lm'
+	# print show_options('root',meth)
+	sol1=root(lambda x:eq195(x,A,nel,B,Nc),stpoint,jac=False,method=meth)
 	if sol1.success==True:
 		out=sol1.x
 	elif sol1.success==False:
@@ -137,19 +141,34 @@ def Seq195(stpoint,A,nel,B,Nc):
 
 	return out
 
+def nodupl(A):
+	# Takes in an nX2 numpy array and removes duplicate rows
+	new=array([A[0]])
+	tol=1e-6  # Because numerical root solver can give slightly different values
+	for i in A:
+		for j in new:
+			if (i[0]-j[0])/i[0]<tol and (i[1]-j[1])/i[1]<tol:
+				break
+		else:
+			new=append(new,array([i]),axis=0)
+
+	return new
+
 def MSeq195(A,nel,B,Nc):
 	# Uses Seq195 to solve for each of the roots of eq195
 	# Look on each side of each resonance and then eliminate duplicates
 	# Expect a total 1 root for G band, 1 root for each magnetoexciton (inter and intra)
 	roots=zeros((2*(1+Nc+1),2))
-	# Look on both sides of each resonance by a factor of epsilon
-	eps=.001
-	roots[0]        =Seq195([(1+eps)*C.w0.real        ,C.w0.imag]        ,A,nel,B,Nc)		# G band
-	roots[1]	    =Seq195([(1-eps)*C.w0.real        ,C.w0.imag]        ,A,nel,B,Nc)
-	for n in range(Nc):																		# inter band transitions
-		roots[2+n*2]=Seq195([(1+eps)*MEinter(n,B).real,MEinter(n,B).imag],A,nel,B,Nc)
-		roots[3+n*2]=Seq195([(1-eps)*MEinter(n,B).real,MEinter(n,B).imag],A,nel,B,Nc)
-	roots[2*Nc+2]   =Seq195([(1+eps)*MEintra(n,B).real,MEintra(n,B).imag],A,nel,B,Nc)		# intra band transitions
-	roots[2*Nc+3]   =Seq195([(1-eps)*MEintra(n,B).real,MEintra(n,B).imag],A,nel,B,Nc)
+	# Look on high side of resonance by a factor of dp and low side by a factor of dm
+	# Values chosen so resonance increased by a factor of 5 from its asymptotics
+	dp=.001
+	dm=.001
+	roots[0]        =Seq195([(1+dp)*C.w0.real        ,C.w0.imag]        ,A,nel,B,Nc)	# G band
+	roots[1]	    =Seq195([(1-dm)*C.w0.real        ,C.w0.imag]        ,A,nel,B,Nc)
+	for n in range(Nc):																	# inter band transitions
+		roots[2+n*2]=Seq195([(1+dp)*MEinter(n,B).real,MEinter(n,B).imag],A,nel,B,Nc)
+		roots[3+n*2]=Seq195([(1-dm)*MEinter(n,B).real,MEinter(n,B).imag],A,nel,B,Nc)
+	roots[2*Nc+2]   =Seq195([(1+dp)*MEintra(n,B).real,MEintra(n,B).imag],A,nel,B,Nc)	# intra band transitions
+	roots[2*Nc+3]   =Seq195([(1-dm)*MEintra(n,B).real,MEintra(n,B).imag],A,nel,B,Nc)
 
 	return roots
