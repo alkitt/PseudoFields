@@ -1,10 +1,11 @@
 # Pseudo.py
-# To rotate, take the x axis as the armchair direction and rotate the hole under the graphene
+# To rotate, take the x axis as the zigzag direction and rotate the hole under the graphene
 # This ammounts to rotating the positions (so the triangle rotates) and rotating the strain tensor
 from scipy import *
 from scipy.interpolate import griddata
 from Constants import *
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import axes3d
 
 
 def ImportReduce(dfiles,lt,q):
@@ -39,8 +40,8 @@ def Rotate(xy,strains,theta):
 def PVP(strains):
 	# Returns the PVP without the leading factor betag*fq/(2*ag)
 	# As well as the factor of q**(2/3) from reducing the strain
-	Ax=1/pi*strains[:,1]
-	Ay=1/(2*pi)*(strains[:,0]-strains[:,2])
+	Ax=1/(2*pi)*(strains[:,0]-strains[:,2])
+	Ay=-1/pi*strains[:,1]
 
 	return (Ax,Ay)
 
@@ -67,7 +68,7 @@ def PMF(dfiles,lt,q,theta,xgrid,ygrid):
 	# First and Second column x, y (m) third column strain (absolute)
 	# lt=Fundamental length of the problem
 	# q=Fundamental strain scale in the problem
-	# theta=angle of rotation of the microchamber under the armchair graphene direction
+	# theta=angle of rotation of the microchamber under the zigzag graphene direction
 	# xgrid, ygrid--an array of x and y position to interpolate the PMF onto
 	# Bs--outputted grid of PMF
 	# BS, xgrid, and ygrid formatted like an image
@@ -93,7 +94,7 @@ def PMF(dfiles,lt,q,theta,xgrid,ygrid):
 
 	return Bs
 
-def plotPMF(xgrid,ygrid,Bs,show=True,save=False,limits=False,figure=1):
+def plotPMF(xgrid,ygrid,Bs,show=True,save=False,limits=False,figure=1,red=1):
 	# Plot the PMF from PMF function
 	# xgrid, ygrid--an array of x and y position to interpolate the PMF onto
 	# Bs grid of PMF
@@ -106,6 +107,7 @@ def plotPMF(xgrid,ygrid,Bs,show=True,save=False,limits=False,figure=1):
 	# save--give a string of the filename to save to if you want to save out
 	# limits--give a two element list of the lower and upper limit
 	# figure--if you prefer a different figure number
+	# red--Option to reduce the x and y extent of the plotted image
 	fig=plt.figure(figure)
 	plt.clf()
 	ax=fig.add_subplot(111,aspect=1)
@@ -113,9 +115,52 @@ def plotPMF(xgrid,ygrid,Bs,show=True,save=False,limits=False,figure=1):
 	if limits!=False:
 		plt.clim(limits[0],limits[1])
 	plt.xlabel('x/L')
+	plt.xlim(xgrid.min()*red,xgrid.max()*red)
 	plt.ylabel('y/L')
+	plt.ylim(ygrid.min()*red,ygrid.max()*red)
 	cbar=plt.colorbar()
 	cbar.set_label('B(T)')
+	if show==True:
+		plt.show()
+	if save!=False:
+		plt.savefig(save)
+
+def plotPMFsingle(xgrid,ygrid,Bs,show=True,save=False,figure=1,strideL=8,Nlevels=7,expand=2.5):
+	# Plot the PMF from PMF function
+	# Nice single plot of the optimal rotation
+	# xgrid, ygrid--an array of x and y position to interpolate the PMF onto
+	# Bs grid of PMF
+	# BS, xgrid, and ygrid formatted like an image
+	# [row,column]=[x,y] increasing with increasing index--first element lower left corner of image
+	# x increases throughout a row
+	# y increases each column
+	# Options:
+	# show--true or false based on whether it should be printed to screen
+	# save--give a string of the filename to save to if you want to save out
+	# limits--give a two element list of the lower and upper limit
+	# figure--if you prefer a different figure number
+	# strideL--How far to stride in the columns and the rows of the Bs array for points to plot
+	# Nlevels--The number of levels in the contour plot
+	# expand--How far below the smallest value to plot the contour plot
+	fig=plt.figure(figure)
+	plt.clf()
+	ax=fig.gca(projection='3d')
+	surf=ax.plot_surface(xgrid,ygrid,Bs,\
+		rstride=strideL,cstride=strideL,\
+		linewidth=.1,antialiased=True,alpha=1,\
+		vmin=nanmin(Bs), vmax=nanmax(Bs),cmap=plt.cm.rainbow,shade=True)
+	cset=\
+	ax.contourf(xgrid,ygrid,Bs,Nlevels,vmin=nanmin(Bs),vmax=nanmax(Bs),zdir='z',offset=nanmin(Bs)*expand,cmap=plt.cm.rainbow,shade=True)
+	ax.contour( xgrid,ygrid,Bs,Nlevels,vmin=nanmin(Bs),vmax=nanmax(Bs),zdir='z',offset=nanmin(Bs)*expand,colors='black')
+
+	ax.set_xlabel('x/L')
+	ax.set_xlim(xgrid.min(),xgrid.max())
+	ax.set_ylabel('y/L')
+	ax.set_ylim(ygrid.min(),ygrid.max())
+	ax.set_zlim(nanmin(Bs)*expand,nanmax(Bs))
+	cbar=fig.colorbar(surf, shrink=0.5, aspect=10)
+	cbar.set_label('B(T)')
+	
 	if show==True:
 		plt.show()
 	if save!=False:
